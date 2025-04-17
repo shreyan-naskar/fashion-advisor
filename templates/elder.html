@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Recommendations</title>
+    <link rel="stylesheet" href="/static/css/elder.css">
+    <style>
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: white;
+            border: 1px solid #81C784;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        .card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .card h4 {
+            margin-top: 0.8rem;
+            font-size: 1.1rem;
+            color: #2E7D32;
+            text-align: center;
+        }
+        #preview {
+            max-width: 350px;
+            border: 2px solid #2E7D32;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        button[type="submit"] {
+            font-size: 1.1rem;
+            padding: 0.8rem 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, {{ name }}! Share Your Style</h1>
+        <p class="subtitle">Upload an outfit photo for personalized recommendations</p>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="image-upload">Select Image:</label>
+                <input type="file" id="image-upload" name="image" accept="image/*" required>
+            </div>
+            <button type="submit" class="submit-btn">Get Recommendations</button>
+        </form>
+        
+        <div id="results" style="display: none;">
+            <div class="results-header">
+                <h2>Your Style Analysis</h2>
+                <div class="upload-preview">
+                    <h3>Your Uploaded Outfit:</h3>
+                    <img id="preview" alt="Your uploaded outfit">
+                </div>
+            </div>
+            
+            <div class="recommendation-section">
+                <h3><span class="icon">👔</span> Similar Clothing Items</h3>
+                <div id="similarItems" class="card-container"></div>
+            </div>
+            
+            <div class="recommendation-section">
+                <h3><span class="icon">👓</span> Complementary Accessories</h3>
+                <div id="accessories" class="card-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Analyzing...';
+            
+            try {
+                const formData = new FormData(e.target);
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                
+                // Display results
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('preview').src = data.uploaded_image;
+                
+                // Display recommendations with enhanced information
+                displayCards(data.similar, 'similarItems');
+                displayCards(data.accessories, 'accessories');
+                
+            } catch (error) {
+                alert('Error getting recommendations. Please try again.');
+                console.error('Error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Get Recommendations';
+            }
+        });
+
+        function displayCards(items, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p class="no-results">No recommendations available</p>';
+                return;
+            }
+            
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="/static/inventory/${item.file_path}" 
+                         alt="${item.productDisplayName || 'Fashion item'}"
+                         onerror="this.src='/static/images/placeholder.jpg'">
+                    <h4>${item.productDisplayName || 'Item'}</h4>
+                    ${item.price ? `<p class="price">${item.price}</p>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Image preview functionality
+        document.getElementById('image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('preview');
+                    preview.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

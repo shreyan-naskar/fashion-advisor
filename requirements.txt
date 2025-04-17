@@ -1,0 +1,6 @@
+flask
+pandas
+werkzeug
+openai
+google-generativeai
+python-dotenv

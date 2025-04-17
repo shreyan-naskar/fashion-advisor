@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Studio | Young</title>
+    <link rel="stylesheet" href="/static/css/young.css">
+    <style>
+        /* Dynamic elements that need higher specificity */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 2px solid #A5D6A7;
+        }
+        
+        .card-info {
+            padding: 1rem;
+        }
+        
+        .card h4 {
+            margin: 0;
+            color: #1B5E20;
+            font-size: 0.95rem;
+        }
+        
+        .card .price {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+        
+        #preview {
+            max-width: 300px;
+            border-radius: 16px;
+            border: 4px solid #4CAF50;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .image-error {
+            background-color: #f8f8f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="young-header">
+            <h1>Hey {{ name }}! <span class="emoji">🔥</span></h1>
+            <p class="tagline">Upload your fit and discover fresh styles</p>
+        </header>
+        
+        <div class="upload-box">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="file-upload">
+                    <label for="image-upload" class="upload-label">
+                        <span class="upload-icon">📤</span>
+                        <span class="upload-text">Choose your best outfit photo</span>
+                    </label>
+                    <input type="file" id="image-upload" name="image" accept="image/*" required>
+                </div>
+                <button type="submit" class="action-btn">
+                    <span class="btn-icon">✨</span> Generate Magic
+                </button>
+            </form>
+        </div>
+        
+        <div id="results" style="display: none;">
+            <div class="results-header">
+                <h2>Your Style Breakdown</h2>
+                <div class="upload-preview">
+                    <h3>Your Uploaded Look:</h3>
+                    <img id="preview" alt="Your awesome outfit">
+                </div>
+            </div>
+            
+            <div class="recommendation-section">
+                <h3 class="section-title"><span class="icon">👕</span> Similar Vibes</h3>
+                <div id="similarItems" class="card-container"></div>
+            </div>
+            
+            <div class="recommendation-section">
+                <h3 class="section-title"><span class="icon">💎</span> Dope Accessories</h3>
+                <div id="accessories" class="card-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const button = e.target.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Loading...';
+  
+        try {
+          const res = await fetch('/recommend', {
+            method: 'POST',
+            body: formData
+          });
+  
+          const data = await res.json();
+          console.log("Response:", data);
+  
+          document.getElementById('results').style.display = 'block';
+  
+          // Show uploaded preview
+          const uploadedImage = URL.createObjectURL(document.getElementById('image-upload').files[0]);
+          document.getElementById('preview-display').src = uploadedImage;
+          document.getElementById('preview-display').style.maxWidth = '300px';
+          document.getElementById('preview-display').style.borderRadius = '12px';
+          document.getElementById('preview-display').style.border = '3px solid #4caf50';
+  
+          displayCards(data.similar || [], 'similarItems');
+          displayCards(data.accessories || [], 'accessories');
+  
+        } catch (err) {
+          alert('Something went wrong!');
+          console.error(err);
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Generate Recommendations';
+        }
+      });
+  
+      document.getElementById('image-upload').addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const preview = document.getElementById('preview');
+            preview.src = event.target.result;
+            preview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+  
+      function displayCards(paths, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+  
+        if (paths.length === 0) {
+          container.innerHTML = '<p>No images found.</p>';
+          return;
+        }
+  
+        paths.forEach(path => {
+          const card = document.createElement('div');
+          card.className = 'card';
+  
+          let fullPath = path.startsWith('http') ? path : `/static/inventory/${path}`;
+  
+          const img = document.createElement('img');
+          img.src = fullPath;
+          img.alt = 'Recommended item';
+          img.onerror = () => {
+            img.replaceWith(Object.assign(document.createElement('div'), {
+              className: 'image-error',
+              textContent: 'Image not available'
+            }));
+          };
+  
+          card.appendChild(img);
+          container.appendChild(card);
+        });
+      }
+    </script>
+    
+</body>
+</html>

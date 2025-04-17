@@ -1,0 +1,4 @@
+.env
+env
+static/inventory
+static/uploads
