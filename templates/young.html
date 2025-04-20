@@ -70,7 +70,7 @@
         }
     </style>
 </head>
-<body>
+<!-- <body>
     <div class="container">
         <header class="young-header">
             <h1>Hey {{ name }}! <span class="emoji">🔥</span></h1>
@@ -195,5 +195,132 @@
       }
     </script>
     
+</body> -->
+
+<!-- ... HEAD and STYLES stay unchanged ... -->
+
+<body>
+  <div class="container">
+      <header class="young-header">
+          <h1>Hey {{ name }}! <span class="emoji">🔥</span></h1>
+          <p class="tagline">Upload your fit and discover fresh styles</p>
+      </header>
+
+      <div class="upload-box">
+          <form id="uploadForm" enctype="multipart/form-data">
+              <div class="file-upload">
+                  <label for="image-upload" class="upload-label">
+                      <span class="upload-icon">📤</span>
+                      <span class="upload-text">Choose your best outfit photo</span>
+                  </label>
+                  <input type="file" id="image-upload" name="image" accept="image/*" required>
+              </div>
+              <button type="submit" class="action-btn">
+                  <span class="btn-icon">✨</span> Generate Magic
+              </button>
+          </form>
+      </div>
+
+      <div id="results" style="display: none;">
+          <div class="results-header">
+              <h2>Your Style Breakdown</h2>
+              <div class="upload-preview">
+                  <h3>Your Uploaded Look:</h3>
+                  <img id="preview" alt="Your awesome outfit">
+              </div>
+          </div>
+
+          <div class="recommendation-section">
+              <h3 class="section-title"><span class="icon">👕</span> Similar Vibes</h3>
+              <div id="similarItems" class="card-container"></div>
+          </div>
+
+          <div class="recommendation-section">
+              <h3 class="section-title"><span class="icon">💎</span> Dope Accessories</h3>
+              <div id="accessories" class="card-container"></div>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const button = e.target.querySelector('button');
+      button.disabled = true;
+      button.textContent = 'Loading...';
+
+      try {
+        const res = await fetch('/recommend', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        console.log("Response:", data);
+
+        document.getElementById('results').style.display = 'block';
+
+        // Show uploaded preview
+        const uploadedImage = URL.createObjectURL(document.getElementById('image-upload').files[0]);
+        const preview = document.getElementById('preview');
+        preview.src = uploadedImage;
+        preview.style.display = 'block';
+
+        displayCards(data.similar || [], 'similarItems');
+        displayCards(data.accessories || [], 'accessories');
+
+      } catch (err) {
+        alert('Something went wrong!');
+        console.error(err);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Generate Magic';
+      }
+    });
+
+    document.getElementById('image-upload').addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const preview = document.getElementById('preview');
+          preview.src = event.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function displayCards(paths, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      if (paths.length === 0) {
+        container.innerHTML = '<p>No images found.</p>';
+        return;
+      }
+
+      paths.forEach(path => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const img = document.createElement('img');
+        img.src = path.startsWith('/static/') ? path : `/static/${path}`;
+        img.alt = 'Recommended item';
+
+        img.onerror = () => {
+          img.replaceWith(Object.assign(document.createElement('div'), {
+            className: 'image-error',
+            textContent: 'Image not available'
+          }));
+        };
+
+        card.appendChild(img);
+        container.appendChild(card);
+      });
+    }
+  </script>
 </body>
+
 </html>
