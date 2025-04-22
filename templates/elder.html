@@ -82,74 +82,82 @@
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Analyzing...';
-            
-            try {
-                const formData = new FormData(e.target);
-                const response = await fetch('/recommend', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                const data = await response.json();
-                
-                // Display results
-                document.getElementById('results').style.display = 'block';
-                document.getElementById('preview').src = data.uploaded_image;
-                
-                // Display recommendations with enhanced information
-                displayCards(data.similar, 'similarItems');
-                displayCards(data.accessories, 'accessories');
-                
-            } catch (error) {
-                alert('Error getting recommendations. Please try again.');
-                console.error('Error:', error);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Get Recommendations';
-            }
-        });
-
-        function displayCards(items, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            
-            if (!items || items.length === 0) {
-                container.innerHTML = '<p class="no-results">No recommendations available</p>';
-                return;
-            }
-            
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <img src="/static/inventory/${item.file_path}" 
-                         alt="${item.productDisplayName || 'Fashion item'}"
-                         onerror="this.src='/static/images/placeholder.jpg'">
-                    <h4>${item.productDisplayName || 'Item'}</h4>
-                    ${item.price ? `<p class="price">${item.price}</p>` : ''}
-                `;
-                container.appendChild(card);
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const button = e.target.querySelector('button');
+          button.disabled = true;
+          button.textContent = 'Loading...';
+    
+          try {
+            const res = await fetch('/recommend', {
+              method: 'POST',
+              body: formData
             });
-        }
-
-        // Image preview functionality
-        document.getElementById('image-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.getElementById('preview');
-                    preview.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+    
+            const data = await res.json();
+            console.log("Response:", data);
+    
+            document.getElementById('results').style.display = 'block';
+    
+            // Show uploaded preview
+            const uploadedImage = URL.createObjectURL(document.getElementById('image-upload').files[0]);
+            const preview = document.getElementById('preview');
+            preview.src = uploadedImage;
+            preview.style.display = 'block';
+    
+            displayCards(data.similar || [], 'similarItems');
+            displayCards(data.accessories || [], 'accessories');
+    
+          } catch (err) {
+            alert('Something went wrong!');
+            console.error(err);
+          } finally {
+            button.disabled = false;
+            button.textContent = 'Generate Magic';
+          }
         });
-    </script>
+    
+        document.getElementById('image-upload').addEventListener('change', function () {
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              const preview = document.getElementById('preview');
+              preview.src = event.target.result;
+              preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+    
+        function displayCards(paths, containerId) {
+          const container = document.getElementById(containerId);
+          container.innerHTML = '';
+    
+          if (paths.length === 0) {
+            container.innerHTML = '<p>No images found.</p>';
+            return;
+          }
+    
+          paths.forEach(path => {
+            const card = document.createElement('div');
+            card.className = 'card';
+    
+            const img = document.createElement('img');
+            img.src = path.startsWith('/static/') ? path : `/static/${path}`;
+            img.alt = 'Recommended item';
+    
+            img.onerror = () => {
+              img.replaceWith(Object.assign(document.createElement('div'), {
+                className: 'image-error',
+                textContent: 'Image not available'
+              }));
+            };
+    
+            card.appendChild(img);
+            container.appendChild(card);
+          });
+        }
+      </script>
 </body>
 </html>
