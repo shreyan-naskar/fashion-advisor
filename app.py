@@ -124,6 +124,9 @@ def get_recommendations(image_path, rec_type):
 
         extracted_attrs = json.loads(response_text)
 
+        if isinstance(extracted_attrs, list):
+            extracted_attrs = extracted_attrs[0]
+
     except json.JSONDecodeError as e:
         print("Gemini attribute extraction failed:", str(e))
         print("Raw response:", response_text)
@@ -168,7 +171,7 @@ def get_recommendations(image_path, rec_type):
     
     print([item["file_path"] for item in selected])
     # Return only the file_path for the selected items
-    return [item["file_path"] for item in selected]
+    return [f"/static/{item['file_path']}" for item in selected]
 
 
 # Routes
@@ -223,6 +226,11 @@ def recommend():
 @app.route('/static/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route("/cart")
+def view_cart():
+    return render_template("cart.html")
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

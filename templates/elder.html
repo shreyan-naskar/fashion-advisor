@@ -50,11 +50,13 @@
     <div class="container">
         <h1>Welcome, {{ name }}! Share Your Style</h1>
         <p class="subtitle">Upload an outfit photo for personalized recommendations</p>
+        <a href="/cart" class="action-btn" style="float: right;">🛒 View Cart</a>
         
         <form id="uploadForm" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="image-upload">Select Image:</label>
                 <input type="file" id="image-upload" name="image" accept="image/*" required>
+
             </div>
             <button type="submit" class="submit-btn">Get Recommendations</button>
         </form>
@@ -81,83 +83,106 @@
     </div>
 
     <script>
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const formData = new FormData(e.target);
-          const button = e.target.querySelector('button');
-          button.disabled = true;
-          button.textContent = 'Loading...';
-    
-          try {
-            const res = await fetch('/recommend', {
-              method: 'POST',
-              body: formData
-            });
-    
-            const data = await res.json();
-            console.log("Response:", data);
-    
-            document.getElementById('results').style.display = 'block';
-    
-            // Show uploaded preview
-            const uploadedImage = URL.createObjectURL(document.getElementById('image-upload').files[0]);
-            const preview = document.getElementById('preview');
-            preview.src = uploadedImage;
-            preview.style.display = 'block';
-    
-            displayCards(data.similar || [], 'similarItems');
-            displayCards(data.accessories || [], 'accessories');
-    
-          } catch (err) {
-            alert('Something went wrong!');
-            console.error(err);
-          } finally {
-            button.disabled = false;
-            button.textContent = 'Generate Magic';
-          }
-        });
-    
-        document.getElementById('image-upload').addEventListener('change', function () {
-          const file = this.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-              const preview = document.getElementById('preview');
-              preview.src = event.target.result;
+        window.addEventListener('DOMContentLoaded', () => {
+          const form = document.getElementById('uploadForm');
+          const imageInput = document.getElementById('image-upload');
+          const preview = document.getElementById('preview');
+      
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+      
+            // ✅ Clear the cart each time user requests suggestions
+            console.log("🧹 Clearing cart before recommendation...");
+            localStorage.removeItem('cart');
+      
+            const formData = new FormData(form);
+            const button = form.querySelector('button');
+            button.disabled = true;
+            button.textContent = 'Loading...';
+      
+            try {
+              const res = await fetch('/recommend', {
+                method: 'POST',
+                body: formData
+              });
+      
+              const data = await res.json();
+              console.log("✅ Received response:", data);
+      
+              document.getElementById('results').style.display = 'block';
+      
+              const uploadedImage = URL.createObjectURL(imageInput.files[0]);
+              preview.src = uploadedImage;
               preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+      
+              displayCards(data.similar || [], 'similarItems');
+              displayCards(data.accessories || [], 'accessories');
+            } catch (err) {
+              console.error("❌ Error during fetch:", err);
+              alert("Something went wrong!");
+            } finally {
+              button.disabled = false;
+              button.textContent = 'Generate Magic';
+            }
+          });
+      
+          imageInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = function (event) {
+                preview.src = event.target.result;
+                preview.style.display = 'block';
+              };
+              reader.readAsDataURL(file);
+            }
+          });
+      
+          function displayCards(paths, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+      
+            if (paths.length === 0) {
+              container.innerHTML = '<p>No images found.</p>';
+              return;
+            }
+      
+            paths.forEach(path => {
+              const card = document.createElement('div');
+              card.className = 'card';
+      
+              const img = document.createElement('img');
+              img.src = path;
+              img.alt = 'Recommended item';
+              img.onerror = () => {
+                img.replaceWith(Object.assign(document.createElement('div'), {
+                  className: 'image-error',
+                  textContent: 'Image not available'
+                }));
+              };
+      
+              const infoDiv = document.createElement('div');
+              infoDiv.className = 'card-info';
+      
+              const addButton = document.createElement('button');
+              addButton.textContent = 'Add to Cart - ₹50';
+              addButton.className = 'action-btn';
+              addButton.onclick = () => addToCart(path);
+      
+              infoDiv.appendChild(addButton);
+              card.appendChild(img);
+              card.appendChild(infoDiv);
+              container.appendChild(card);
+            });
+          }
+      
+          function addToCart(imagePath) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.push({ imagePath: imagePath, price: 50 });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert('Added to cart!');
           }
         });
-    
-        function displayCards(paths, containerId) {
-          const container = document.getElementById(containerId);
-          container.innerHTML = '';
-    
-          if (paths.length === 0) {
-            container.innerHTML = '<p>No images found.</p>';
-            return;
-          }
-    
-          paths.forEach(path => {
-            const card = document.createElement('div');
-            card.className = 'card';
-    
-            const img = document.createElement('img');
-            img.src = path.startsWith('/static/') ? path : `/static/${path}`;
-            img.alt = 'Recommended item';
-    
-            img.onerror = () => {
-              img.replaceWith(Object.assign(document.createElement('div'), {
-                className: 'image-error',
-                textContent: 'Image not available'
-              }));
-            };
-    
-            card.appendChild(img);
-            container.appendChild(card);
-          });
-        }
       </script>
 </body>
 </html>
