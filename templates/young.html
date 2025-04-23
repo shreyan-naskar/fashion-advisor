@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Style Studio | Young</title>
     <link rel="stylesheet" href="/static/css/young.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Dynamic elements that need higher specificity */
+        
         .card-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -70,155 +75,35 @@
         }
     </style>
 </head>
-<!-- <body>
-    <div class="container">
-        <header class="young-header">
-            <h1>Hey {{ name }}! <span class="emoji">🔥</span></h1>
-            <p class="tagline">Upload your fit and discover fresh styles</p>
-        </header>
-        
-        <div class="upload-box">
-            <form id="uploadForm" enctype="multipart/form-data">
-                <div class="file-upload">
-                    <label for="image-upload" class="upload-label">
-                        <span class="upload-icon">📤</span>
-                        <span class="upload-text">Choose your best outfit photo</span>
-                    </label>
-                    <input type="file" id="image-upload" name="image" accept="image/*" required>
-                </div>
-                <button type="submit" class="action-btn">
-                    <span class="btn-icon">✨</span> Generate Magic
-                </button>
-            </form>
-        </div>
-        
-        <div id="results" style="display: none;">
-            <div class="results-header">
-                <h2>Your Style Breakdown</h2>
-                <div class="upload-preview">
-                    <h3>Your Uploaded Look:</h3>
-                    <img id="preview" alt="Your awesome outfit">
-                </div>
-            </div>
-            
-            <div class="recommendation-section">
-                <h3 class="section-title"><span class="icon">👕</span> Similar Vibes</h3>
-                <div id="similarItems" class="card-container"></div>
-            </div>
-            
-            <div class="recommendation-section">
-                <h3 class="section-title"><span class="icon">💎</span> Dope Accessories</h3>
-                <div id="accessories" class="card-container"></div>
-            </div>
-        </div>
-    </div>
 
-    <script>
-      document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const button = e.target.querySelector('button');
-        button.disabled = true;
-        button.textContent = 'Loading...';
-  
-        try {
-          const res = await fetch('/recommend', {
-            method: 'POST',
-            body: formData
-          });
-  
-          const data = await res.json();
-          console.log("Response:", data);
-  
-          document.getElementById('results').style.display = 'block';
-  
-          // Show uploaded preview
-          const uploadedImage = URL.createObjectURL(document.getElementById('image-upload').files[0]);
-          document.getElementById('preview-display').src = uploadedImage;
-          document.getElementById('preview-display').style.maxWidth = '300px';
-          document.getElementById('preview-display').style.borderRadius = '12px';
-          document.getElementById('preview-display').style.border = '3px solid #4caf50';
-  
-          displayCards(data.similar || [], 'similarItems');
-          displayCards(data.accessories || [], 'accessories');
-  
-        } catch (err) {
-          alert('Something went wrong!');
-          console.error(err);
-        } finally {
-          button.disabled = false;
-          button.textContent = 'Generate Recommendations';
-        }
-      });
-  
-      document.getElementById('image-upload').addEventListener('change', function () {
-        const file = this.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function (event) {
-            const preview = document.getElementById('preview');
-            preview.src = event.target.result;
-            preview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-  
-      function displayCards(paths, containerId) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = '';
-  
-        if (paths.length === 0) {
-          container.innerHTML = '<p>No images found.</p>';
-          return;
-        }
-  
-        paths.forEach(path => {
-          const card = document.createElement('div');
-          card.className = 'card';
-  
-          let fullPath = path.startsWith('http') ? path : `/static/inventory/${path}`;
-  
-          const img = document.createElement('img');
-          img.src = fullPath;
-          img.alt = 'Recommended item';
-          img.onerror = () => {
-            img.replaceWith(Object.assign(document.createElement('div'), {
-              className: 'image-error',
-              textContent: 'Image not available'
-            }));
-          };
-  
-          card.appendChild(img);
-          container.appendChild(card);
-        });
-      }
-    </script>
-    
-</body> -->
-
-<!-- ... HEAD and STYLES stay unchanged ... -->
 
 <body>
   <div class="container">
-      <header class="young-header">
-          <h1>Hey {{ name }}! <span class="emoji">🔥</span></h1>
-          <p class="tagline">Upload your fit and discover fresh styles</p>
-          <a href="/cart" class="action-btn" style="float: right;">🛒 View Cart</a>
-      </header>
-
+      <h1>Hey {{ name }}!! <span class="emoji">🔥</span></h1>
+      <a href="/cart" class="action-btn" style="margin-right: 20px; float: right; margin-top: 35px;">🛒 View Cart</a>
+      
       <div class="upload-box">
           <form id="uploadForm" enctype="multipart/form-data">
               <div class="file-upload">
+                <h3 class="tagline">Upload Your Fit and Discover Fresh Styles!</h3>
                   <label for="image-upload" class="upload-label">
                       <span class="upload-icon">📤</span>
-                      <span class="upload-text">Choose your best outfit photo</span>
+                      <span class="upload-text">Choose File</span>
                   </label>
+                  <span id="file-name" style="margin-left: 1rem; font-weight: bold;"></span>
                   <input type="file" id="image-upload" name="image" accept="image/*" required>
               </div>
               <button type="submit" class="action-btn">
                   <span class="btn-icon">✨</span> Generate Magic
               </button>
+              
+                  <!--
+                  <div class="upload-btn-wrapper">
+                    <button class="btn">Upload a file</button>
+                    <input type="file" id="image-upload" name="image" accept="image/*" required/>
+                  </div>-->
+              
+              
           </form>
       </div>
 
@@ -328,6 +213,7 @@
           const addButton = document.createElement('button');
           addButton.textContent = 'Add to Cart - ₹50';
           addButton.className = 'action-btn';
+          addButton.style.marginLeft = '27px';
           addButton.onclick = () => addToCart(path);
   
           infoDiv.appendChild(addButton);
@@ -344,6 +230,25 @@
         alert('Added to cart!');
       }
     });
+
+    // select file displays file name
+    document.getElementById('image-upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const fileNameSpan = document.getElementById('file-name');
+        
+        if (file) {
+            fileNameSpan.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.getElementById('preview');
+                preview.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            fileNameSpan.textContent = '';
+        }
+        });
   </script>
   
   
